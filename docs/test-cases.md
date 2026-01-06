@@ -28,11 +28,50 @@
 
 ---
 
-### TC-003 – Create test record with invalid payload is rejected
+### TC-003 – Create test record with missing required fields is rejected
 **Related requirements:** NFR-01, NFR-02  
 **Preconditions:** API running  
 **Steps:**
-1. Send POST request to `/test-records` with missing required fields
+1. Send POST request to `/test-records` with a JSON body missing required fields
 **Expected result:**
-- HTTP 400
-- Error response format is consistent and includes a readable message
+- HTTP 400 Bad Request
+- Error response indicates missing required fields
+- Error response format is consistent and readable
+
+---
+
+### TC-004 – Create test record with too short `name`
+**Related requirements:** FR-02, NFR-01  
+**Preconditions:** API running  
+**Steps:**
+1. Send POST request to `/test-records` with body:
+```json
+{
+    "name": "Hi",
+    "status": "DRAFT"
+}
+```
+**Expected result:**
+- HTTP 400 Bad Request
+- Validation error related to minimum length of `name`
+
+
+---
+
+### TC-005 – Create test record with invalid `status`
+**Related requirements:** FR-02, NFR-01, NFR-02 
+**Preconditions:** API running  
+**Steps:**
+1. Send POST request to `/test-records` with body:
+```json
+{
+"name": "Leakage current test - Luminaire A",
+"status": "INVALID"
+}
+```
+**Expected result:**
+- HTTP 400 Bad Request
+- Error response indicates invalid status value
+- Error response format follows the standard
+
+

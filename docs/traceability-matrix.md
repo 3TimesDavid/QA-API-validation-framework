@@ -3,10 +3,10 @@
 | Requirement | Test Cases |
 |------------|------------|
 | FR-01 | TC-001 |
-| FR-02 | TC-002 |
+| FR-02 | TC-002, TC-003, TC-004, TC-005 |
 | FR-03 | (TBD) |
 | FR-04 | (TBD) |
 | FR-05 | (TBD) |
-| NFR-01 | TC-002, TC-003 |
-| NFR-02 | TC-003 |
+| NFR-01 | TC-002, TC-003, TC-004, TC-005 |
+| NFR-02 | TC-003, TC-005 |
 | NFR-03 | (TBD) |
