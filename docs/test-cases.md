@@ -74,4 +74,30 @@
 - Error response indicates invalid status value
 - Error response format follows the standard
 
+---
 
+### TC-006 – Retrieve existing test record by id
+**Related requirements:** FR-03  
+**Preconditions:** API running and a test record exists  
+**Steps:**
+1. Create a test record via POST `/test-records` (TC-002)
+2. Send GET request to `/test-records/{id}` using the returned `id`
+**Expected result:**
+- HTTP 200 OK
+- Response contains the same `id` created in step 1
+
+---
+
+### TC-007 – Update test record status and verify persistence
+**Related requirements:** FR-04  
+**Preconditions:** API running and a test record exists  
+**Steps:**
+1. Create a test record via POST `/test-records` (TC-002)
+2. Send PATCH request to `/test-records/{id}/status` with:
+```json
+    { "status": "IN_PROGRESS" }
+```
+**Expected result:**
+- PATCH request returns HTTP 200 OK
+- GET request returns HTTP 200 OK
+- The returned test record has `status = IN_PROGRESS`
