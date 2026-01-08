@@ -3,6 +3,8 @@ package com.qa.framework.sutapi.api;
 import com.qa.framework.sutapi.domain.TestRecord;
 import com.qa.framework.sutapi.repository.TestRecordRepository;
 
+import java.util.UUID;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -24,4 +26,19 @@ public class TestRecordController {
         TestRecord record = new TestRecord(request.getName(), request.getStatus());
         return repository.save(record);
     }
+
+    @GetMapping("/{id}")
+    public TestRecord getById(@PathVariable UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("TestRecord not found: " + id));
+    }
+
+    @PatchMapping("/{id}/status")
+    public TestRecord updateStatus(@PathVariable UUID id, @Valid @RequestBody UpdateStatusRequest request) {
+        TestRecord record = repository.findById(id)
+            .orElseThrow(() -> new NotFoundException("TestRecord not found: " + id));
+            record.setStatus(request.getStatus());
+        return repository.save(record);
+    }
+
 }
