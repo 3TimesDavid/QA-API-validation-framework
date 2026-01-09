@@ -3,6 +3,7 @@ package com.qa.framework.sutapi.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qa.framework.sutapi.domain.Status;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,6 +44,7 @@ class TestRecordIntegrationTest {
     }
 
     // ---------- Smoke ----------
+    @Tag("smoke")
     @Test
     void health_returns_up() throws Exception {
         mockMvc.perform(get("/health")
@@ -52,6 +54,7 @@ class TestRecordIntegrationTest {
     }
 
     // ---------- Happy path ----------
+    @Tag("happy")
     @Test
     void create_get_patch_get_flow_works() throws Exception {
         String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
@@ -83,6 +86,7 @@ class TestRecordIntegrationTest {
     }
 
     // ---------- POST negative ----------
+    @Tag("negative")
     @Test
     void create_without_name_returns_400() throws Exception {
         String json = """
@@ -96,6 +100,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void create_with_short_name_returns_400() throws Exception {
         String json = """
@@ -109,6 +114,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void create_with_long_name_returns_400() throws Exception {
         String longName = "a".repeat(101);
@@ -123,6 +129,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void create_without_status_returns_400() throws Exception {
         String json = """
@@ -136,6 +143,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void create_with_invalid_status_returns_400() throws Exception {
         String json = """
@@ -150,6 +158,7 @@ class TestRecordIntegrationTest {
     }
 
     // ---------- GET negative ----------
+    @Tag("negative")
     @Test
     void get_non_existing_id_returns_404() throws Exception {
         String nonExistingId = "00000000-0000-0000-0000-000000000000";
@@ -159,6 +168,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Tag("negative")
     @Test
     void get_malformed_id_returns_400() throws Exception {
         mockMvc.perform(get("/test-records/{id}", "not-a-uuid")
@@ -167,6 +177,7 @@ class TestRecordIntegrationTest {
     }
 
     // ---------- PATCH negative ----------
+    @Tag("negative")
     @Test
     void patch_without_status_returns_400() throws Exception {
         String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
@@ -182,6 +193,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void patch_invalid_status_returns_400() throws Exception {
         String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
@@ -197,6 +209,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Tag("negative")
     @Test
     void patch_non_existing_id_returns_404() throws Exception {
         String nonExistingId = "00000000-0000-0000-0000-000000000000";
@@ -212,6 +225,7 @@ class TestRecordIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Tag("negative")
     @Test
     void patch_malformed_id_returns_400() throws Exception {
         String json = """
