@@ -1,103 +1,79 @@
-# Test Cases
+# Test Cases – TestRecord API
 
-## Conventions
-- IDs: TC-001, TC-002...
-- Each test case maps to one or more requirements (FR/NFR).
-
----
-
-### TC-001 – Health endpoint returns OK
-**Related requirements:** FR-01  
-**Preconditions:** API running  
-**Steps:**
-1. Send GET request to `/health`
-**Expected result:**
-- HTTP 200
-- Response indicates service is healthy
+## TC-01 – Health check returns UP
+- **Endpoint:** GET /health
+- **Description:** Verify that the API is running and reachable.
+- **Expected result:** HTTP 200 and body { "status": "UP" }
+- **Type:** Smoke
+- **Automation:** Yes
+- **Automated test:** health_returns_up
 
 ---
 
-### TC-002 – Create test record with valid payload
-**Related requirements:** FR-02, NFR-01  
-**Preconditions:** API running  
-**Steps:**
-1. Send POST request to `/test-records` with a valid JSON body
-**Expected result:**
-- HTTP 201
-- Response includes created record with an identifier and status
+## TC-02 – Create TestRecord (valid request)
+- **Endpoint:** POST /test-records
+- **Description:** Create a new TestRecord with valid name and status.
+- **Expected result:** HTTP 201 and generated id, createdAt, updatedAt.
+- **Type:** Happy path
+- **Automation:** Yes
+- **Automated test:** create_get_patch_get_flow_works
 
 ---
 
-### TC-003 – Create test record with missing required fields is rejected
-**Related requirements:** NFR-01, NFR-02  
-**Preconditions:** API running  
-**Steps:**
-1. Send POST request to `/test-records` with a JSON body missing required fields
-**Expected result:**
-- HTTP 400 Bad Request
-- Error response indicates missing required fields
-- Error response format is consistent and readable
+## TC-03 – Get TestRecord by id (existing)
+- **Endpoint:** GET /test-records/{id}
+- **Description:** Retrieve an existing TestRecord by id.
+- **Expected result:** HTTP 200 and correct TestRecord data.
+- **Type:** Happy path
+- **Automation:** Yes
+- **Automated test:** create_get_patch_get_flow_works
 
 ---
 
-### TC-004 – Create test record with too short `name`
-**Related requirements:** FR-02, NFR-01  
-**Preconditions:** API running  
-**Steps:**
-1. Send POST request to `/test-records` with body:
-```json
-{
-    "name": "Hi",
-    "status": "DRAFT"
-}
-```
-**Expected result:**
-- HTTP 400 Bad Request
-- Validation error related to minimum length of `name`
-
+## TC-04 – Update TestRecord status
+- **Endpoint:** PATCH /test-records/{id}/status
+- **Description:** Update the status of an existing TestRecord.
+- **Expected result:** HTTP 200 and updated status.
+- **Type:** Happy path
+- **Automation:** Yes
+- **Automated test:** create_get_patch_get_flow_works
 
 ---
 
-### TC-005 – Create test record with invalid `status`
-**Related requirements:** FR-02, NFR-01, NFR-02 
-**Preconditions:** API running  
-**Steps:**
-1. Send POST request to `/test-records` with body:
-```json
-{
-"name": "Leakage current test - Luminaire A",
-"status": "INVALID"
-}
-```
-**Expected result:**
-- HTTP 400 Bad Request
-- Error response indicates invalid status value
-- Error response format follows the standard
+## TC-05 – Create TestRecord without name
+- **Endpoint:** POST /test-records
+- **Description:** Try to create a TestRecord without name.
+- **Expected result:** HTTP 400 Bad Request.
+- **Type:** Negative
+- **Automation:** Yes
+- **Automated test:** create_without_name_returns_400
 
 ---
 
-### TC-006 – Retrieve existing test record by id
-**Related requirements:** FR-03  
-**Preconditions:** API running and a test record exists  
-**Steps:**
-1. Create a test record via POST `/test-records` (TC-002)
-2. Send GET request to `/test-records/{id}` using the returned `id`
-**Expected result:**
-- HTTP 200 OK
-- Response contains the same `id` created in step 1
+## TC-06 – Create TestRecord with invalid status
+- **Endpoint:** POST /test-records
+- **Description:** Try to create a TestRecord with invalid status value.
+- **Expected result:** HTTP 400 Bad Request.
+- **Type:** Negative
+- **Automation:** Yes
+- **Automated test:** create_with_invalid_status_returns_400
 
 ---
 
-### TC-007 – Update test record status and verify persistence
-**Related requirements:** FR-04  
-**Preconditions:** API running and a test record exists  
-**Steps:**
-1. Create a test record via POST `/test-records` (TC-002)
-2. Send PATCH request to `/test-records/{id}/status` with:
-```json
-    { "status": "IN_PROGRESS" }
-```
-**Expected result:**
-- PATCH request returns HTTP 200 OK
-- GET request returns HTTP 200 OK
-- The returned test record has `status = IN_PROGRESS`
+## TC-07 – Get TestRecord with non-existing id
+- **Endpoint:** GET /test-records/{id}
+- **Description:** Retrieve a TestRecord with an id that does not exist.
+- **Expected result:** HTTP 404 Not Found.
+- **Type:** Negative
+- **Automation:** Yes
+- **Automated test:** get_non_existing_id_returns_404
+
+---
+
+## TC-08 – Update TestRecord with malformed id
+- **Endpoint:** PATCH /test-records/{id}/status
+- **Description:** Update status using a malformed id.
+- **Expected result:** HTTP 400 Bad Request.
+- **Type:** Negative
+- **Automation:** Yes
+- **Automated test:** patch_malformed_id_returns_400
