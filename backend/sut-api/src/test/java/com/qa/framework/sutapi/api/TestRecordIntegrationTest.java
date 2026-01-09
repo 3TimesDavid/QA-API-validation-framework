@@ -21,48 +21,207 @@ class TestRecordIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @Test
-    void create_get_patch_get_flow_works() throws Exception {
-        // 1) POST
+    // ---------- Helpers ----------
+    private String createRecordAndReturnId(String name, Status status) throws Exception {
         CreateTestRecordRequest create = new CreateTestRecordRequest();
-        create.setName("Leakage current test - Luminaire A");
-        create.setStatus(Status.DRAFT);
+        create.setName(name);
+        create.setStatus(status);
 
-        String postResponse = mockMvc.perform(post("/test-records")
+        String body = mockMvc.perform(post("/test-records")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(create)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        // Extract id (simple parse)
-        String id = objectMapper.readTree(postResponse).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asText();
         assertThat(id).isNotBlank();
+        return id;
+    }
 
-        // 2) GET
-        mockMvc.perform(get("/test-records/{id}", id))
+    // ---------- Smoke ----------
+    @Test
+    void health_returns_up() throws Exception {
+        mockMvc.perform(get("/health")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    // ---------- Happy path ----------
+    @Test
+    void create_get_patch_get_flow_works() throws Exception {
+        String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
+
+        mockMvc.perform(get("/test-records/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.status").value("DRAFT"));
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists());
 
-        // 3) PATCH
         UpdateStatusRequest update = new UpdateStatusRequest();
         update.setStatus(Status.IN_PROGRESS);
 
         mockMvc.perform(patch("/test-records/{id}/status", id)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-        // 4) GET again
-        mockMvc.perform(get("/test-records/{id}", id))
+        mockMvc.perform(get("/test-records/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    // ---------- POST negative ----------
+    @Test
+    void create_without_name_returns_400() throws Exception {
+        String json = """
+            { "status": "DRAFT" }
+            """;
+
+        mockMvc.perform(post("/test-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_with_short_name_returns_400() throws Exception {
+        String json = """
+            { "name": "ab", "status": "DRAFT" }
+            """;
+
+        mockMvc.perform(post("/test-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_with_long_name_returns_400() throws Exception {
+        String longName = "a".repeat(101);
+        String json = """
+            { "name": "%s", "status": "DRAFT" }
+            """.formatted(longName);
+
+        mockMvc.perform(post("/test-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_without_status_returns_400() throws Exception {
+        String json = """
+            { "name": "Leakage current test - Luminaire A" }
+            """;
+
+        mockMvc.perform(post("/test-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_with_invalid_status_returns_400() throws Exception {
+        String json = """
+            { "name": "Leakage current test - Luminaire A", "status": "UNKNOWN" }
+            """;
+
+        mockMvc.perform(post("/test-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ---------- GET negative ----------
+    @Test
+    void get_non_existing_id_returns_404() throws Exception {
+        String nonExistingId = "00000000-0000-0000-0000-000000000000";
+
+        mockMvc.perform(get("/test-records/{id}", nonExistingId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void get_malformed_id_returns_400() throws Exception {
+        mockMvc.perform(get("/test-records/{id}", "not-a-uuid")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ---------- PATCH negative ----------
+    @Test
+    void patch_without_status_returns_400() throws Exception {
+        String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
+
+        String json = """
+            { }
+            """;
+
+        mockMvc.perform(patch("/test-records/{id}/status", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void patch_invalid_status_returns_400() throws Exception {
+        String id = createRecordAndReturnId("Leakage current test - Luminaire A", Status.DRAFT);
+
+        String json = """
+            { "status": "UNKNOWN" }
+            """;
+
+        mockMvc.perform(patch("/test-records/{id}/status", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void patch_non_existing_id_returns_404() throws Exception {
+        String nonExistingId = "00000000-0000-0000-0000-000000000000";
+
+        String json = """
+            { "status": "IN_PROGRESS" }
+            """;
+
+        mockMvc.perform(patch("/test-records/{id}/status", nonExistingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void patch_malformed_id_returns_400() throws Exception {
+        String json = """
+            { "status": "IN_PROGRESS" }
+            """;
+
+        mockMvc.perform(patch("/test-records/{id}/status", "not-a-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
     }
 }
