@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-    @GetMapping("/health")
+    @GetMapping(value = "/health", produces = "application/json")
     public Map<String, String> health() {
         return Map.of("status", "UP");
     }
+
 }
